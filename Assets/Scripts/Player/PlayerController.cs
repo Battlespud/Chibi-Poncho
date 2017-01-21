@@ -6,20 +6,17 @@ public class PlayerController : MonoBehaviour {
 
 	public int lives = 3; //how many lives do we get
 
-
 	public const string characterName = "Dongcho"; //characters name, make it cute
 	public string playerName; //Player's name for savegame or whatever
 
-	const float JumpForce = 200;
+    private SpriteRenderer player_sr; //our sprite, useed to flip and stuff
+    private Rigidbody player_rb;
+    private GameObject player_go;
 
-	public SpriteRenderer player_sr; //our sprite, useed to flip and stuff
-	public Rigidbody player_rb;
-	public GameObject player_go;
-	public GameObject player_feet;
-
-
-	//Sprites
-	public Sprite standing;
+    //Sprites
+    //TODO: Won't need these once an animator is used
+    [Header("Sprites")]
+    public Sprite standing;
 	public Sprite moving;
 	public Sprite movingBack;
 
@@ -27,47 +24,34 @@ public class PlayerController : MonoBehaviour {
 	public SpriteRenderer face_sr;
 
 
-	Collider feet_col;
+	private Collider feet_col;
 
-	float speed = 18; //18 is a good number here
-	float speedLimit = 1;  //1 is a good number here
-	public bool grounded = false;
-
-    //Flags for player control
-    private bool moveLeft, moveRight, jump;
+	private const float speed = 18.0f; //18 is a good number here
+	private const float speedLimit = 1.0f;  //1 is a good number here
+    private const float jumpForce = 200.0f;
+    private const float groundCheckDistance = 0.3f, groundCheckHalfRange = 0.125f;
+    public bool grounded = false;
 
 	// Use this for initialization
 	void Start () {
 		getComponents (); //same fam, same
-		Physics.IgnoreLayerCollision (9, 10); //ignore collisions between feet and body
+		Physics.IgnoreLayerCollision (9, 10); //ignore collisions between feet and body 
+        //TODO: consider ignoring phys layers in the Unity editor physics settings to avoid having to use numbers in scripts
 	}
-
 
 	void getComponents(){
 		player_sr = this.gameObject.GetComponent<SpriteRenderer> ();
 		player_rb = this.gameObject.GetComponent<Rigidbody> ();
 		player_go = this.gameObject;
-		player_feet = player_go.transform.Find ("feets").gameObject;
-		feet_col = player_feet.GetComponent<Collider> ();
 		face_sr = face.GetComponent<SpriteRenderer> ();
 	}
 
 	void FixedUpdate() {
-        if (jump)
-            Jump();
-
-        if (moveLeft)
-            Move(Vector2.left);
-        else if (moveRight)
-            Move(Vector2.right);
-
-		Clamp ();
-        resetAllInputFlags();
+		ClampVelocity();
+        CheckGrounded();
 	}
 
-
-
-	void Clamp(){   //prevent rigidbody from accelerating uncontrollably without dealing with the fuckery of drag
+	private void ClampVelocity(){   //prevent rigidbody from accelerating uncontrollably without dealing with the fuckery of drag
 		if (Mathf.Abs(player_rb.velocity.x) > speedLimit) {
 			if (player_rb.velocity.x > 0) {
 				player_rb.AddForce (new Vector3 (5 * (player_rb.velocity.x / (-1 * player_rb.velocity.x)) * (Mathf.Abs (player_rb.velocity.x) - speedLimit), 0, 0));
@@ -77,26 +61,41 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
+    private void CheckGrounded() //Perform a raycast downwards and see if it hits a foothold
+    {
+        Debug.DrawLine(transform.position, transform.position + (Vector3.down * 0.3f), Color.blue);
+        Debug.DrawLine(transform.position + (Vector3.right * groundCheckHalfRange), transform.position + (Vector3.right * groundCheckHalfRange) + (Vector3.down * 0.3f), Color.blue);
+        Debug.DrawLine(transform.position - (Vector3.right * groundCheckHalfRange), transform.position - (Vector3.right * groundCheckHalfRange) + (Vector3.down * 0.3f), Color.blue);
+
+        RaycastHit rayHit1, rayHit2, rayHit3;
+        Physics.Raycast(transform.position, Vector2.down, out rayHit1);
+        Physics.Raycast(transform.position + (Vector3.right * groundCheckHalfRange), Vector2.down, out rayHit2);
+        Physics.Raycast(transform.position - (Vector3.right * groundCheckHalfRange), Vector2.down, out rayHit3);
+
+        if ((rayHit1.collider && rayHit1.distance < 0.3f && rayHit1.collider.CompareTag("Terrain"))
+            || (rayHit2.collider && rayHit2.distance < 0.3f && rayHit2.collider.CompareTag("Terrain"))
+            || (rayHit3.collider && rayHit3.distance < 0.3f && rayHit3.collider.CompareTag("Terrain")))
+        {
+            grounded = true;
+            print("Distance from ground: Grounded");
+        }     
+        else
+        {
+            grounded = false;
+            print("Distance from ground: " + (rayHit1.distance - 0.3f));
+        }
+            
+
+        
+    }
+
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetAxisRaw("Horizontal") < 0.0f)
-            moveLeft = true;
-		if (Input.GetAxisRaw("Horizontal") > 0.0f)
-            moveRight = true;
-		if (Input.GetButtonDown("Jump"))
-            jump = true;
-
 		CheckSprite ();
 	}
 
-    private void resetAllInputFlags()
-    {
-        moveLeft = false;
-        moveRight = false;
-        jump = false;
-    }
-
 	//Update the sprite based on how we're moving.  Basically manual animating. Maybe we wont need this tbh
+    //This is done with animation trees in the editor. This will be scrapped eventually..
 	void CheckSprite(){
 		//first check if moving or not
 		bool isMoving = false;
@@ -110,11 +109,10 @@ public class PlayerController : MonoBehaviour {
 			if (player_rb.velocity.x < 0 && !player_sr.flipX || player_rb.velocity.x > 0 && player_sr.flipX) {
 				player_sr.sprite = movingBack;
 			}
-
 		}
 	}
 
-	void Move(Vector2 dir){
+	public void Move(Vector2 dir){
 		int x = (int)dir.x;
 		Vector2 modifier = new Vector2(0,0);
 		switch (x) {
@@ -152,16 +150,14 @@ public class PlayerController : MonoBehaviour {
             player_rb.velocity = new Vector3(0.0f, player_rb.velocity.y, 0.0f);
             return;
         }
+
         player_rb.AddForce(modifier * speed);
     }
 
-	void Jump(){
+	public void Jump(){
 		//	player_cc.Move (Vector3.up * JumpHeight);
 		if (grounded) {
-			player_rb.AddForce (Vector3.up * JumpForce);
+			player_rb.AddForce (Vector3.up * jumpForce);
 		}
 	}
-
-
-
 }
