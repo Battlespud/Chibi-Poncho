@@ -6,7 +6,6 @@ public class PlayerController : MonoBehaviour {
 
 	public int lives = 3; //how many lives do we get
 
-	bool isInitialized = false; //is our character properly setup?
 
 	public const string characterName = "Dongcho"; //characters name, make it cute
 	public string playerName; //Player's name for savegame or whatever
@@ -24,6 +23,10 @@ public class PlayerController : MonoBehaviour {
 	public Sprite moving;
 	public Sprite movingBack;
 
+	public GameObject face;
+	public SpriteRenderer face_sr;
+
+
 	Collider feet_col;
 
 	float speed = 18; //18 is a good number here
@@ -37,7 +40,6 @@ public class PlayerController : MonoBehaviour {
 	void Start () {
 		getComponents (); //same fam, same
 		Physics.IgnoreLayerCollision (9, 10); //ignore collisions between feet and body
-		isInitialized = true;
 	}
 
 
@@ -47,6 +49,7 @@ public class PlayerController : MonoBehaviour {
 		player_go = this.gameObject;
 		player_feet = player_go.transform.Find ("feets").gameObject;
 		feet_col = player_feet.GetComponent<Collider> ();
+		face_sr = face.GetComponent<SpriteRenderer> ();
 	}
 
 	void FixedUpdate() {
@@ -140,6 +143,7 @@ public class PlayerController : MonoBehaviour {
 			modifier *= .3f;
 		}
 		player_rb.AddForce (modifier*speed);
+		face_sr.flipX = player_sr.flipX;
 	}
 
 	void Jump(){
