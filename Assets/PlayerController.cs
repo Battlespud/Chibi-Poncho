@@ -70,7 +70,7 @@ public class PlayerController : MonoBehaviour {
 		if (Input.GetKey (KeyCode.RightArrow)) {
 			Move (Vector2.right);
 		}
-		if (Input.GetKeyDown (KeyCode.Space)) {
+		if (Input.GetKeyDown (KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow)) {
 			Jump();
 		}
 		CheckSprite ();
