@@ -142,8 +142,7 @@ public class PlayerController : MonoBehaviour {
 		if (!grounded) {
 			modifier *= .3f;
 		}
-		player_rb.AddForce (modifier*speed);
-		face_sr.flipX = player_sr.flipX;
+        face_sr.flipX = player_sr.flipX;
 
         //Perform a raycast in the direction we're moving to see if we're humping a wall..
         RaycastHit rayHit;
