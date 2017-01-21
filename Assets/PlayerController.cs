@@ -30,6 +30,9 @@ public class PlayerController : MonoBehaviour {
 	float speedLimit = 1;  //1 is a good number here
 	public bool grounded = false;
 
+    //Flags for player control
+    private bool moveLeft, moveRight, jump;
+
 	// Use this for initialization
 	void Start () {
 		getComponents (); //same fam, same
@@ -47,7 +50,16 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
+        if (jump)
+            Jump();
+
+        if (moveLeft)
+            Move(Vector2.left);
+        else if (moveRight)
+            Move(Vector2.right);
+
 		Clamp ();
+        resetAllInputFlags();
 	}
 
 
@@ -64,17 +76,22 @@ public class PlayerController : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetKey (KeyCode.LeftArrow)) {
-			Move (Vector2.left);
-		}
-		if (Input.GetKey (KeyCode.RightArrow)) {
-			Move (Vector2.right);
-		}
-		if (Input.GetKeyDown (KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow)) {
-			Jump();
-		}
+		if (Input.GetAxisRaw("Horizontal") < 0.0f)
+            moveLeft = true;
+		if (Input.GetAxisRaw("Horizontal") > 0.0f)
+            moveRight = true;
+		if (Input.GetButtonDown("Jump"))
+            jump = true;
+
 		CheckSprite ();
 	}
+
+    private void resetAllInputFlags()
+    {
+        moveLeft = false;
+        moveRight = false;
+        jump = false;
+    }
 
 	//Update the sprite based on how we're moving.  Basically manual animating. Maybe we wont need this tbh
 	void CheckSprite(){
