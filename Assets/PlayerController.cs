@@ -26,19 +26,19 @@ public class PlayerController : MonoBehaviour {
 
 	Collider feet_col;
 
-	float speed = 18;
-	float speedLimit = 1;
+	float speed = 18; //18 is a good number here
+	float speedLimit = 1;  //1 is a good number here
 	public bool grounded = false;
 
 	// Use this for initialization
 	void Start () {
-		getSR (); //same fam, same
+		getComponents (); //same fam, same
 		Physics.IgnoreLayerCollision (9, 10); //ignore collisions between feet and body
 		isInitialized = true;
 	}
 
 
-	void getSR(){
+	void getComponents(){
 		player_sr = this.gameObject.GetComponent<SpriteRenderer> ();
 		player_rb = this.gameObject.GetComponent<Rigidbody> ();
 		player_go = this.gameObject;
@@ -52,7 +52,7 @@ public class PlayerController : MonoBehaviour {
 
 
 
-	void Clamp(){
+	void Clamp(){   //prevent rigidbody from accelerating uncontrollably without dealing with the fuckery of drag
 		if (Mathf.Abs(player_rb.velocity.x) > speedLimit) {
 			if (player_rb.velocity.x > 0) {
 				player_rb.AddForce (new Vector3 (5 * (player_rb.velocity.x / (-1 * player_rb.velocity.x)) * (Mathf.Abs (player_rb.velocity.x) - speedLimit), 0, 0));
@@ -76,6 +76,7 @@ public class PlayerController : MonoBehaviour {
 		CheckSprite ();
 	}
 
+	//Update the sprite based on how we're moving.  Basically manual animating. Maybe we wont need this tbh
 	void CheckSprite(){
 		//first check if moving or not
 		bool isMoving = false;
@@ -83,7 +84,7 @@ public class PlayerController : MonoBehaviour {
 			player_sr.sprite = moving;
 			isMoving = true;
 		} else {
-			player_sr.sprite = standing;
+			player_sr.sprite = standing;  
 		}
 		if (isMoving) {
 			if (player_rb.velocity.x < 0 && !player_sr.flipX || player_rb.velocity.x > 0 && player_sr.flipX) {
@@ -111,7 +112,7 @@ public class PlayerController : MonoBehaviour {
 			Debug.Log ("Movement went wrong " + dir); //moving in a nonexistent direction or not moving at all
 			break;
 		}
-		if (grounded && !Input.GetKey(KeyCode.LeftShift)) {  //turn to face where we're moving
+		if (grounded && !Input.GetKey(KeyCode.LeftShift)) {  //turn to face where we're moving, use shift to not turn.
 			if (modifier.x < 0) {
 				player_sr.flipX = true;
 			} else {
