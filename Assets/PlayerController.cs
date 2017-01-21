@@ -144,7 +144,17 @@ public class PlayerController : MonoBehaviour {
 		}
 		player_rb.AddForce (modifier*speed);
 		face_sr.flipX = player_sr.flipX;
-	}
+
+        //Perform a raycast in the direction we're moving to see if we're humping a wall..
+        RaycastHit rayHit;
+        Physics.Raycast(transform.position, dir, out rayHit);
+        if (rayHit.collider && rayHit.distance < 0.2f && rayHit.collider.CompareTag("Terrain"))
+        {
+            player_rb.velocity = new Vector3(0.0f, player_rb.velocity.y, 0.0f);
+            return;
+        }
+        player_rb.AddForce(modifier * speed);
+    }
 
 	void Jump(){
 		//	player_cc.Move (Vector3.up * JumpHeight);
